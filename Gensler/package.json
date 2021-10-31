@@ -1,0 +1,12 @@
+{
+  "name": "Gensler-Notes",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "C. Lewis <ctj.lewis@icloud.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn pdf && yarn html",
+    "pdf": "sed 's,-\\{80\\},\\\\pagebreak,g' README.md | pandoc --pdf-engine=xelatex -o README.pdf",
+    "html": "pandoc README.md -s --mathjax -o README.html"
+  }
+}

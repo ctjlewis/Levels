@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="C. Lewis (@ctjlewis), for the Levels team" />
+  <meta name="dcterms.date" content="2021-10-31" />
+  <title>Gensler: an LP analysis tool</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <style type="text/css">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  
+  
+  
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Gensler: an LP analysis tool</h1>
+<p class="author">C. Lewis (<span class="citation" data-cites="ctjlewis">@ctjlewis</span>), for the Levels team</p>
+<p class="date">October 31, 2021</p>
+</header>
+<nav id="TOC">
+
+</nav>
+<h1 id="problem">Problem</h1>
+<p>Given a transaction that interacts with a liquidity pool, how can we deduce the specific account action (swap vs. LP add/remove and token pair) that was taken using only the transaction data?</p>
+<div style="page-break-after: always; display: none">
+
+</div>
+<h1 id="research">Research</h1>
+<p>We are currently researching transactions that interact with the following protocols:</p>
+<ul>
+<li>Uniswap</li>
+<li>Compound</li>
+<li>SushiSwap</li>
+<li>Olympus</li>
+</ul>
+<h2 id="example-data">Example data</h2>
+<p>A random account which has interacted with various services was picked randomly from a recent block, at address:</p>
+<p><a href="https://etherscan.io/address/0x4929f4d38f2955649b5aa34343da04cf790b9d92"><code>0x4929f4d38f2955649b5aa34343da04cf790b9d92</code></a></p>
+<p>The following transactions it sent will be referenced:</p>
+<table>
+<colgroup>
+<col style="width: 47%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Action</th>
+<th>Tx Hash</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Uniswap V2</strong>: Remove <strong>0.41 MKR</strong> and <strong>0.81 ETH</strong> Liquidity</td>
+<td><a href="https://etherscan.io/tx/0xa22a005bad96842a239f36cc5e3b1fed883812f3d3e1628f175abc9f36304775"><code>0xa22a00...304775</code></a></td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>Uniswap V2</strong>: Supply <strong>2474.15 WILD</strong> and <strong>0.985 ETH</strong> Liquidity</td>
+<td><a href="https://etherscan.io/tx/0x64f98a82cb5c8fae4f3a5299f7fa7440e20e67cc5f187b40b5c3476f85e67548"><code>0x64f98a...e67548</code></a></td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>Uniswap V3</strong>: Swap <strong>0.75 ETH</strong> for <strong>2050.50 WILD</strong> and <strong>0.25 ETH</strong> for <strong>696.65 WILD</strong></td>
+<td><a href="https://etherscan.io/tx/0x817f4a22893c88cdbd148b064b27bc40db82e8e532f4abfcb2e793936ca51a89"><code>0x817f4a...a51a89</code></a></td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td><strong>SushiSwap</strong>: Swap <strong>1.63 COMP</strong> for <strong>0.12 ETH</strong></td>
+<td><a href="https://etherscan.io/tx/0x41f977dadaaaca951c048274181d2afc9edf665a1b9fdb2c0d47a5c0c60ac0b5"><code>0x41f977...0ac0b5</code></a></td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-after: always; display: none">
+
+</div>
+<h1 id="reading-account-actions-from-transactions">Reading account actions from transactions</h1>
+<p>We know that account actions can be inferred from raw transactions not only on principle but also because Etherscan does it, as seen below under <strong>Complications</strong> regarding transaction <a href="https://etherscan.io/tx/0xa22a005bad96842a239f36cc5e3b1fed883812f3d3e1628f175abc9f36304775"><code>0xa22a00...304775</code></a>, correctly identifying the account action (removing liquidity) and the tokens in question (ETH and MKR). This transaction involves the user interacting with the <strong>Uniswap v2 Router</strong> contract at <a href="https://etherscan.io/address/0x7a250d5630b4cf539739df2c5dacb4c659f2488d"><code>0x7a250d...f2488d</code></a>.</p>
+<h2 id="complications">Complications</h2>
+<p>For our problem, we have only an address, and it is necessary to decode the transaction input data and/or logs in order to reason about the underlying trade represented by a given transaction (which coins were swapped, whether wETH was burnt, etc). It is not easy to do this, though Etherscan is able to do it as shown in the <strong>Transaction Action</strong> field.</p>
+<p><em>Below, in yellow: Etherscan’s computed “Transaction Action” field parsing the account action from a transaction (not available via API); in red: ERC20 transfers involved in the transaction.</em></p>
+<p><img src="assets/2.png" /></p>
+<p>This is not exposed by the API, and has <a href="https://ethereum.stackexchange.com/questions/97076/how-to-get-transaction-action-etherscan">been requested many times</a>, enough that Etherscan has commented on it:</p>
+<blockquote>
+<p>We unfortunately do not have an endpoint that returns the “Transaction Action” information at this point of time. It is a popular one by request, and we will definitely consider to add it in a future update.</p>
+<p><em>—Etherscan Support</em></p>
+</blockquote>
+<p>Thus, it seems to be nontrivial to decode the account action from a raw transaction, and this will involve reproducing logic similar to that of Etherscan’s <strong>Transaction Action</strong> field.</p>
+<p>In addition, because each liquidity pair (at least on Uniswap) has its own dedicated contract, it is also not feasible to simply look at an address’s interactions with a single contract to gather liquidity provision trades. It would be necessary to load a list of <em>all</em> Uniswap LP contracts for <em>each</em> token pair and then cross-reference an account’s ERC20 token transfers with each contract address using the following Etherscan API call:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode ts"><code class="sourceCode typescript"><a class="sourceLine" id="cb1-1" title="1"><span class="vs">`https://api.etherscan.io/api</span></a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="vs">   ?module=account</span></a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="vs">   &amp;action=tokentx</span></a>
+<a class="sourceLine" id="cb1-4" title="4"><span class="vs">   &amp;address=</span><span class="sc">${</span>address<span class="sc">}</span></a>
+<a class="sourceLine" id="cb1-5" title="5"><span class="vs">   &amp;contractAddress=</span><span class="sc">${</span>pairLPContractAddress<span class="sc">}</span><span class="vs">`</span></a></code></pre></div>
+<p>And this does not appear to be a sustainable approach.</p>
+<h2 id="recommendations">Recommendations</h2>
+<p>Despite these complications, in general, it <em>is</em> possible to find <em>all</em> of a user’s account actions on a protocol, without distinguishing the specific action or learning much about it, by loading all of an address’s transactions (after a given block height, for a fixed lookback period) and searching the user’s transactions for interactions with the protocol’s routing contract.</p>
+<p>Once logic to decode account actions from raw transactions is established, it will be possible to parse these transactions to understand whether they are swaps or adding/removing liquidity, and the underlying token pair, etc.</p>
+<p>For now, it is recommended to simply <strong>count the number of trades on a protocol</strong> and use this as an initial stat until a way to decode transactions is known.</p>
+<h2 id="prototypical-example">Prototypical example</h2>
+<p>To count the number of SushiSwap transactions our test trader, <code>0x4929f4...0b9d92</code>, has made, we simply count their interactions with the SushiSwap routing contract, <code>0xd9e1cE...378B9F</code>.</p>
+<div style="page-break-after: always; display: none">
+
+</div>
+<h3 id="reading-the-users-transactions">Reading the user’s transactions</h3>
+<p>An address’s transactions can be read for free, up to 5 requests per second, from the following endpoint:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode ts"><code class="sourceCode typescript"><a class="sourceLine" id="cb2-1" title="1"><span class="vs">`https://api.etherscan.io/api</span></a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="vs">  ?module=account</span></a>
+<a class="sourceLine" id="cb2-3" title="3"><span class="vs">  &amp;action=txlist</span></a>
+<a class="sourceLine" id="cb2-4" title="4"><span class="vs">  &amp;address=0x4929f4d38f2955649b5aa34343da04cf790b9d92`</span></a></code></pre></div>
+<h3 id="looking-for-sushiswap-trades">Looking for SushiSwap trades</h3>
+<p>It is trivial to count the number of trades (liquidity provision and swaps) the user has made like so:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode js"><code class="sourceCode javascript"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">const</span> address <span class="op">=</span> <span class="vs">`0x4929f4d38f2955649b5aa34343da04cf790b9d92`</span><span class="op">;</span></a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="kw">const</span> transactionsRequest <span class="op">=</span> <span class="cf">await</span> <span class="at">fetch</span>(</a>
+<a class="sourceLine" id="cb3-3" title="3">  <span class="vs">`https://api.etherscan.io/api?module=account&amp;action=txlist&amp;address=</span><span class="sc">${</span>address<span class="sc">}</span><span class="vs">`</span></a>
+<a class="sourceLine" id="cb3-4" title="4">)<span class="op">;</span></a>
+<a class="sourceLine" id="cb3-5" title="5"></a>
+<a class="sourceLine" id="cb3-6" title="6"><span class="kw">const</span> transactions <span class="op">=</span> <span class="cf">await</span> <span class="va">transactionsRequest</span>.<span class="at">json</span>()<span class="op">;</span></a>
+<a class="sourceLine" id="cb3-7" title="7"><span class="kw">const</span> trades <span class="op">=</span> <span class="va">transactions</span>.<span class="va">result</span>.<span class="at">filter</span>(</a>
+<a class="sourceLine" id="cb3-8" title="8">  (tx) <span class="kw">=&gt;</span> <span class="va">tx</span>.<span class="at">to</span> <span class="op">==</span> <span class="st">&#39;0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f&#39;</span></a>
+<a class="sourceLine" id="cb3-9" title="9">)<span class="op">;</span></a>
+<a class="sourceLine" id="cb3-10" title="10"></a>
+<a class="sourceLine" id="cb3-11" title="11"><span class="va">console</span>.<span class="at">log</span>(<span class="vs">`User </span><span class="sc">${</span>address<span class="sc">}</span><span class="vs"> made </span><span class="sc">${</span><span class="va">trades</span>.<span class="at">length</span><span class="sc">}</span><span class="vs"> SushiSwap trades!`</span>)<span class="op">;</span></a>
+<a class="sourceLine" id="cb3-12" title="12"><span class="co">// User 0x4929f4d38f2955649b5aa34343da04cf790b9d92 made 64 SushiSwap trades!</span></a></code></pre></div>
+<h2 id="iterating-in-the-future">Iterating in the future</h2>
+<p>Ultimately it will not be ideal to depend only on lightweight free APIs, and the service will likely call for setting up a complete Ethereum node and querying it for data directly rather than relying on Etherscan and other services.</p>
+<p>It will also be necessary to learn more about how to reliably decode raw transactions and read underlying trade data from them, and some writing of particular interest to this research is <a href="https://messari.io/article/retrieving-uniswap-trades-using-the-graph">this blog post</a> by Diran Li. It is certainly possible and is just a matter of time investment.</p>
+<div style="page-break-after: always; display: none">
+
+</div>
+<h1 id="exhibits">Exhibits</h1>
+<p>Various block explorers are capable of simulating internal transactions and/or decoding input data.</p>
+<h2 id="internal-transactions">Internal transactions</h2>
+<p><em>Below: Ethplorer displaying the internal transactions for tx <a href="https://etherscan.io/tx/0xa22a005bad96842a239f36cc5e3b1fed883812f3d3e1628f175abc9f36304775"><code>0xa22a00...304775</code></a>.</em></p>
+<p><img src="assets/4.png" /></p>
+<h2 id="state-changes">State changes</h2>
+<p><em>Below: The state changes for the same transaction as above.</em></p>
+<p><img src="assets/3.png" /></p>
+<h2 id="identifying-an-erc20-lp-token">Identifying an ERC20 LP token</h2>
+<p><em>Below (highlighted): Etherscan identifying the pair a given SushiSwap LP token represents, here the <strong>MCAT/ETH SushiSwap LP</strong> token <a href="https://etherscan.io/token/0xfc98737f842bfff2f4f8b48589943b52728d7c14"><code>0xfc9873...8d7c14</code></a>.</em></p>
+<p><img src="assets/1.png" /></p>
+</body>
+</html>
